@@ -1,7 +1,65 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Blog</title><link>https://zingdle.github.io/posts/</link><description>Recent content in Posts on Blog</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Sat, 04 Jan 2025 19:15:04 +0800</lastBuildDate><atom:link href="https://zingdle.github.io/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Hello World</title><link>https://zingdle.github.io/posts/2025-01-04-hello-world/</link><pubDate>Sat, 04 Jan 2025 19:15:04 +0800</pubDate><guid>https://zingdle.github.io/posts/2025-01-04-hello-world/</guid><description>&lt;p>Hello World&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#abb2bf;background-color:#282c34;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">#include&lt;/span> &lt;span style="color:#7f848e">&amp;lt;iostream&amp;gt;&lt;/span>&lt;span style="color:#7f848e">
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e5c07b">int&lt;/span> &lt;span style="color:#61afef;font-weight:bold">main&lt;/span>() {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e06c75">std&lt;/span>&lt;span style="color:#56b6c2">::&lt;/span>&lt;span style="color:#e06c75">cout&lt;/span> &lt;span style="color:#56b6c2">&amp;lt;&amp;lt;&lt;/span> &lt;span style="color:#98c379">&amp;#34;hello world&amp;#34;&lt;/span> &lt;span style="color:#56b6c2">&amp;lt;&amp;lt;&lt;/span> &lt;span style="color:#e06c75">std&lt;/span>&lt;span style="color:#56b6c2">::&lt;/span>&lt;span style="color:#e06c75">endl&lt;/span>;
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Blog</title><link>https://zingdle.github.io/posts/</link><description>Recent content in Posts on Blog</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Tue, 14 Jan 2025 20:07:06 +0800</lastBuildDate><atom:link href="https://zingdle.github.io/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>HdrHistogram算法和实现</title><link>https://zingdle.github.io/posts/2025-01-14-hdrhistogram/</link><pubDate>Tue, 14 Jan 2025 20:07:06 +0800</pubDate><guid>https://zingdle.github.io/posts/2025-01-14-hdrhistogram/</guid><description>&lt;h2 id="背景">背景&lt;/h2>
+&lt;p>想必大家对延迟（latency）指标一定不会不陌生，它衡量的是事件响应时间的快慢，常见的有网络延迟等。&lt;a href="https://www.elastic.co/cn/blog/averages-can-dangerous-use-percentile">考虑到平均延迟会掩盖真实的问题&lt;/a>，监控中一般都采用百分位（Quantile）指标进行评价，如P50/P90/P99，表示前50%/90%/99%的延迟数据。&lt;/p>
+&lt;p>简单地，我们可以将延迟数据排序，然后取对应百分位的数据即可得到Quantile指标，但显然这样的空间开销和排序时间开销都比较大，不是一个合适的做法。目前工业界和学术界都有比较成熟的百分位计算方法，这些方法都有不同的侧重点，有的更关注并行计算能力，有的更关注准确度。常见的百分位算法可以分为如下几类：&lt;/p>
+&lt;ul>
+&lt;li>基于样本的
+&lt;ul>
+&lt;li>蓄水池采样&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>基于桶的
+&lt;ul>
+&lt;li>基于静态桶
+&lt;ul>
+&lt;li>HdrHistogram&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>基于动态桶
+&lt;ul>
+&lt;li>CKMS, t-digest&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;p>简单来说，百分位算法需要支持接口：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#abb2bf;background-color:#282c34;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#c678dd">struct&lt;/span> &lt;span style="color:#e5c07b">quantile_algo&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e5c07b">void&lt;/span> &lt;span style="color:#61afef;font-weight:bold">add&lt;/span>(&lt;span style="color:#e5c07b">int&lt;/span> &lt;span style="color:#e06c75">x&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e5c07b">int&lt;/span> &lt;span style="color:#61afef;font-weight:bold">percentile_at&lt;/span>(&lt;span style="color:#e5c07b">double&lt;/span> &lt;span style="color:#e06c75">percentile&lt;/span>);
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item></channel></rss>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>add&lt;/code>方法将某个数据加入统计，&lt;code>percentile_at&lt;/code>方法计算对应的百分位指标。&lt;/p>
+&lt;p>本文关注的是如何更快地在线计算延迟。这里的更快，指的是也是更低的延迟，更准确的说是&lt;code>add&lt;/code>方法的延迟。一般来说&lt;code>percentile_at&lt;/code>方法相对调用频率较少，且不在关键路径上。&lt;/p>
+&lt;p>不同Quantile算法的介绍、时间和空间复杂度对比可见&lt;a href="https://caorong.github.io/2020/08/03/quartile-%20algorithm/">这篇文章&lt;/a>。这里我们直接说结论，HdrHistogram更符合我们的场景，所以本文着重关注的也是HdrHistogram。&lt;/p>
+&lt;h2 id="hdrhistogram">HdrHistogram&lt;/h2>
+&lt;p>上面我们提到，HdrHistogram基于静态桶做百分位计算。那么什么叫基于桶的算法呢？考虑到空间开销和时间的开销，我们不能把所有的数据都准确记录下来，那么只能用关键点来sketch多个数据，桶就是sketch数据特征的手段。
+举个例子，统计延迟时，如果数据都分布在300ms内，那么可以划分为3个桶:&lt;/p>
+&lt;pre tabindex="0">&lt;code>Bucket 1 2 3
+Range [0, 100) [100, 200) [200, 300)
+&lt;/code>&lt;/pre>&lt;p>当新遇到一个延迟数据，我们只需要将对应的桶计数+1即可。当有90%的数据都分布在前两个桶中时，我们可以说P90是200ms了。显然这种sketch肯定是有损的，很多情况下不能准确得到Quantile的值，但桶越多，精确度也会越高。&lt;/p>
+&lt;p>上面的例子中我们提前知道数据分布范围，但是如果数据的变化较大，不好提前划分桶该怎么办呢？HdrHistogram采用了一种讨巧的方式，结合了指数划分和等间距划分两种分桶方式，将区间内的桶压缩表示出来。取一段代码&lt;a href="https://github.com/HdrHistogram/HdrHistogram_rust/blob/a3818d6ce81556010c7f04f423e1fa28a9ff1b5c/src/lib.rs#L221-L245">注释&lt;/a> （修改了typo后）：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#abb2bf;background-color:#282c34;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// `Histogram` is the core data structure in HdrSample. It records values, and performs analytics.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">///
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// At its heart, it keeps the count for recorded samples in &amp;#34;buckets&amp;#34; of values. The resolution
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// and distribution of these buckets is tuned based on the desired highest trackable value, as
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// well as the user-specified number of significant decimal digits to preserve. The values for the
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// buckets are kept in a way that resembles floats and doubles: there is a mantissa and an
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// exponent, and each bucket represents a different exponent. The &amp;#34;sub-buckets&amp;#34; within a bucket
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// represent different values for the mantissa.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">///
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// To a first approximation, the sub-buckets of the first
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// bucket would hold the values `0`, `1`, `2`, `3`, …, the sub-buckets of the second bucket would
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// hold `0`, `2`, `4`, `6`, …, the third would hold `0`, `4`, `8`, and so on. However, the low
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// half of each bucket (except bucket 0) is unnecessary, since those values are already covered by
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// the sub-buckets of all the preceeding buckets. Thus, `Histogram` keeps the top half of every
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// such bucket.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">///
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// For the purposes of explanation, consider a `Histogram` with 2048 sub-buckets for every bucket,
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// and a lowest discernible value of 1:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">///
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// &amp;lt;pre&amp;gt;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// The 0th bucket covers 0...2047 in multiples of 1, using all 2048 sub-buckets
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// The 1st bucket covers 2048..4095 in multiples of 2, using only the top 1024 sub-buckets
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// The 2nd bucket covers 4096..8191 in multiple of 4, using only the top 1024 sub-buckets
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#7f848e">/// &amp;lt;/pre&amp;gt;
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>HdrHistogram将桶分成了2层，bucket和sub-bucket，同一bucket内不同sub-bucket等间隔划分，不同bucket指数级别划分。&lt;/p></description></item></channel></rss>
